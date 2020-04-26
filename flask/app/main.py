@@ -5,21 +5,23 @@ import pandas as pd
 import numpy as np
 import json
 import pathlib
+import flask
 
 from dash.dependencies import Input, Output
 from plotly import graph_objs as go
 from plotly.graph_objs import *
 from datetime import datetime as dt
+from app import server
 
 
 app = dash.Dash(
-    __name__, meta_tags=[{"name": "viewport", "content": "width=device-width"}]
+    __name__, server = server, url_base_pathname = '/',
+    meta_tags=[{"name": "viewport", "content": "width=device-width"}]
 )
-server = app.server
 
 
 # Plotly mapbox public token
-mapbox_access_token = "pk.eyJ1IjoicGxvdGx5bWFwYm94IiwiYSI6ImNrOWJqb2F4djBnMjEzbG50amg0dnJieG4ifQ.Zme1-Uzoi75IaFbieBDl3A"
+mapbox_access_token = "pk.eyJ1IjoicmV6YXRhbWEiLCJhIjoiY2s1M2l6Y3V0MDBnbjNlcmpkNnI2bG56NiJ9.q7lwXHHVHLyGJSn2MV8fPA"
 
 PATH = pathlib.Path(__file__).parent
 DATA_PATH = PATH.joinpath("Aurin").resolve()
@@ -86,7 +88,8 @@ app.layout = html.Div(
                                                 for i in base_layer
                                             ],
                                             placeholder="Select a base layer",
-                                            value=[i for i in base_layer][0]
+                                            value=[i for i in base_layer][0],
+											clearable=False
                                         )
                                     ],
                                 ),
@@ -244,6 +247,5 @@ def update_graph(selectedLayer, selectedIndustry, selectedStyle, selectedOpacity
         ),
     )
 
-
-if __name__ == "__main__":
+if __name__ == '__main__':
     app.run_server(debug=True)

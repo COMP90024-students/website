@@ -1,8 +1,6 @@
 ## How to run this app
 
-(The following instructions apply to Windows command line.)
-
-To run this app first clone repository and then open a terminal to the app folder.
+To run this app locally, first clone repository and then open a terminal to the flask folder.
 
 Create and activate a new virtual environment (recommended) by running
 the following:
@@ -29,9 +27,19 @@ pip install -r requirements.txt
 Run the app:
 
 ```
-python app.py
+export FLASK_APP=run.py
+export FLASK_ENV=development
+flask run
 ```
-You can run the app on your browser at http://127.0.0.1:8050
+You can run the app on your browser at http://127.0.0.1:5000
+
+To run the container locally:
+
+```sh
+docker-compose up --build
+```
+
+Go to - http://127.0.0.1/
 
 ## Screenshot
 
