@@ -1,5 +1,7 @@
 ## How to run this app
 
+You can see live version of this app on nectar at http://115.146.92.235 (as long as the instance hasn't been removed)
+
 To run this app locally, first clone repository and then open a terminal to the flask folder.
 
 Create and activate a new virtual environment (recommended) by running
