@@ -1,12 +1,18 @@
-## How to run this app
+## Dash Web App Template
 
-You can see live version of this app on nectar at http://115.146.92.235 (as long as the instance hasn't been removed)
+This dash app is built as a template for the final version web.
+
+All the data used here came from AURIN and used for **demonstration purpose only**.
+
+The relevant data will be updated later when the harvester script has collected enough data from Twitter.
+
+You can see live version of this app on nectar at http://115.146.92.235 *(as long as the instance hasn't been removed)*
 
 To run this app locally, first clone repository and then open a terminal to the flask folder.
 
 Create and activate a new virtual environment (recommended) by running
 the following:
-
+*
 On Windows
 
 ```
