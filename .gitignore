@@ -1,4 +1,5 @@
 venv
+myvenv
 .vscode
 *.pyc
 .DS_Store
