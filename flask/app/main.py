@@ -35,42 +35,42 @@ params = (
 response = requests.get('http://45.113.235.78:5984/ui_db/_design/suburb/_view/suburb_view', params=params, auth=('admin', 'MGZjZGU5N'))
 df_view = parse_view(response.json())
 
-'''
-This section is using different data on my personal instance.
-Its used for pressenting top 15 most frequent words
-Will remove this section after carlos provide raw tweet text on his DB
-'''
-# Connect couchdb
-user = "reza"
-password = "reza"
-couchserver = couchdb.Server("http://%s:%s@115.146.92.235:5984/" % (user, password))
-db = couchserver['db_test']
-# Get list of big cities in AU
-cap = pd.read_csv('/home/rezatama/Downloads/capital.csv')
-city = list(zip(cap['latitude'],cap['longitude']))
-# Get twit data
-lat_ = []
-lon_ = []
-lat_adj = []
-lon_adj= []
-text_ = []
-sntm_ = []
-for item in db.view('place/new-view'):
-    if not item.value[0]:
-        near_city=city[np.argmin([gc((item.key[1],item.key[0]),i).km for i in city])]
-        lat_adj.append(near_city[0])
-        lon_adj.append(near_city[1])
-    else:
-        lat_adj.append(item.key[1])
-        lon_adj.append(item.key[0])
-    lat_.append(item.key[1])
-    lon_.append(item.key[0])
-    text_.append(item.value[1])
-    sntm_.append(item.value[2])
-df_twit = pd.DataFrame({'Latitude':lat_,'Longitude':lon_,'Sentiment':sntm_})
-df_twit_grp = df_twit.groupby(['Latitude','Longitude'],
-    as_index=False).agg({'Sentiment':[('Sentiment Score','mean'),
-    ('Total Tweet','count')]})
+# '''
+# This section is using different data on my personal instance.
+# Its used for pressenting top 15 most frequent words
+# Will remove this section after carlos provide raw tweet text on his DB
+# '''
+# # Connect couchdb
+# user = "reza"
+# password = "reza"
+# couchserver = couchdb.Server("http://%s:%s@115.146.92.235:5984/" % (user, password))
+# db = couchserver['db_test']
+# # Get list of big cities in AU
+# cap = pd.read_csv('/home/rezatama/Downloads/capital.csv')
+# city = list(zip(cap['latitude'],cap['longitude']))
+# # Get twit data
+# lat_ = []
+# lon_ = []
+# lat_adj = []
+# lon_adj= []
+# text_ = []
+# sntm_ = []
+# for item in db.view('place/new-view'):
+#     if not item.value[0]:
+#         near_city=city[np.argmin([gc((item.key[1],item.key[0]),i).km for i in city])]
+#         lat_adj.append(near_city[0])
+#         lon_adj.append(near_city[1])
+#     else:
+#         lat_adj.append(item.key[1])
+#         lon_adj.append(item.key[0])
+#     lat_.append(item.key[1])
+#     lon_.append(item.key[0])
+#     text_.append(item.value[1])
+#     sntm_.append(item.value[2])
+# df_twit = pd.DataFrame({'Latitude':lat_,'Longitude':lon_,'Sentiment':sntm_})
+# df_twit_grp = df_twit.groupby(['Latitude','Longitude'],
+#     as_index=False).agg({'Sentiment':[('Sentiment Score','mean'),
+#     ('Total Tweet','count')]})
 
 # Plotly mapbox public token
 mapbox_access_token = "pk.eyJ1IjoicmV6YXRhbWEiLCJhIjoiY2s1M2l6Y3V0MDBnbjNlcmpkNnI2bG56NiJ9.q7lwXHHVHLyGJSn2MV8fPA"
@@ -89,6 +89,8 @@ with open(DATA_PATH.joinpath('overseas_born.json')) as json_file:
     overseas_born = json.load(json_file)
 with open(DATA_PATH.joinpath('employment_rate.json')) as json_file:
     employment_rate = json.load(json_file)
+
+cap = pd.read_csv(DATA_PATH.joinpath('capitals.csv'))
 
 base_layer = {'Median Age': median_age,
               'Median Income': median_income,
@@ -344,18 +346,18 @@ def update_graph(jsonified_data, selectedLayer, selectedStyle):
         ),
     )
 
-@app.callback(
-    Output("bargraph", "figure"),
-    [Input("map-graph","selectedData")]
-)
-def update_bargraph_plot(idx):
-    """ Callback to rerender bargraph plot """
-    if idx is None:
-        bargraph = plotly_bargraph(text_)
-    else:
-        index = [i["pointIndex"] for i in idx["points"] if i["curveNumber"]==1]
-        bargraph = plotly_bargraph(np.array(text_)[index])
-    return(bargraph)
+# @app.callback(
+#     Output("bargraph", "figure"),
+#     [Input("map-graph","selectedData")]
+# )
+# def update_bargraph_plot(idx):
+#     """ Callback to rerender bargraph plot """
+#     if idx is None:
+#         bargraph = plotly_bargraph(text_)
+#     else:
+#         index = [i["pointIndex"] for i in idx["points"] if i["curveNumber"]==1]
+#         bargraph = plotly_bargraph(np.array(text_)[index])
+#     return(bargraph)
 
 @app.callback(
     output=Output("sentiment-gauge", "value"),
