@@ -90,7 +90,7 @@ with open(DATA_PATH.joinpath('overseas_born.json')) as json_file:
 with open(DATA_PATH.joinpath('employment_rate.json')) as json_file:
     employment_rate = json.load(json_file)
 
-cap = pd.read_csv(DATA_PATH.joinpath('capitals.csv'))
+cap = pd.read_csv(DATA_PATH.joinpath('capital.csv'))
 
 base_layer = {'Median Age': median_age,
               'Median Income': median_income,
