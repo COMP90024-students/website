@@ -7,8 +7,8 @@ import numpy as np
 import json
 import pathlib
 import flask
-import couchdb
-from geopy.distance import great_circle as gc
+# import couchdb
+# from geopy.distance import great_circle as gc
 import requests
 
 from dash.dependencies import Input, Output, State
