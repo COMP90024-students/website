@@ -43,7 +43,7 @@ Taken from https://codepen.io/chriddyp/pen/bWLwgP.css
         width: 80%;
    }
     .column, .columns {
-        margin-left: 4%;
+        margin-left: 0%;
    }
     .column:first-child, .columns:first-child {
         margin-left: 0;
@@ -54,8 +54,11 @@ Taken from https://codepen.io/chriddyp/pen/bWLwgP.css
     .two.columns {
         width: 13.3333333333%;
    }
+   .two-half.columns {
+    width: 20%;
+   }
     .three.columns {
-        width: 22%;
+        width: 18%;
    }
     .four.columns {
         width: 30.6666666667%;
@@ -64,10 +67,10 @@ Taken from https://codepen.io/chriddyp/pen/bWLwgP.css
         width: 39.3333333333%;
    }
     .six.columns {
-        width: 48%;
+        width: 53%;
    }
     .seven.columns {
-        width: 56.6666666667%;
+        width: 60%;
    }
     .eight.columns {
         width: 65.3333333333%;
