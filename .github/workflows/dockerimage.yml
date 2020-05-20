@@ -18,7 +18,7 @@ on:
 # Environment variables available to all jobs and steps in this workflow
 env:
   GITHUB_SHA: ${{ github.sha }}
-  IMAGE: karimoff/website
+  IMAGE: karimoff/team19-website
   IMAGE_WITH_VERSION: $IMAGE:$GITHUB_SHA
 
 jobs:
