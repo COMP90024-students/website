@@ -18,8 +18,6 @@ on:
 # Environment variables available to all jobs and steps in this workflow
 env:
   GITHUB_SHA: ${{ github.sha }}
-  IMAGE: karimoff/team19-website
-  IMAGE_WITH_VERSION: $IMAGE:$GITHUB_SHA
 
 jobs:
   setup-build-publish:
@@ -35,13 +33,23 @@ jobs:
           docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
 
       # Build the image with tag
-      - name: Build, Tag
+      - name: website - Build, Tag
         run: |
-          docker build -t $IMAGE:$GITHUB_SHA -f ./flask/Dockerfile ./flask
-          docker tag $IMAGE:$GITHUB_SHA $IMAGE:latest
+          docker build -t karimoff/team19-website:$GITHUB_SHA -f ./flask/Dockerfile ./flask
+          docker tag karimoff/team19-website:$GITHUB_SHA karimoff/team19-website:latest
+
+      - name: nginx - Build, Tag
+        run: |
+          docker build -t karimoff/team19-nginx:$GITHUB_SHA -f ./nginx/Dockerfile ./nginx
+          docker tag karimoff/team19-nginx:$GITHUB_SHA karimoff/team19-nginx:latest
 
       # Push the image to Docker Hub
-      - name: Publish
+      - name: website - Publish
         run: |
-          docker push $IMAGE:$GITHUB_SHA
-          docker push $IMAGE:latest
+          docker push karimoff/team19-website:$GITHUB_SHA
+          docker push karimoff/team19-website:latest
+
+      - name: nginx - Publish
+        run: |
+          docker push karimoff/team19-nginx:$GITHUB_SHA
+          docker push karimoff/team19-nginx:latest
