@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+import requests
 
 def parse_view(view):
     year = [i['key'][0] for i in view['rows']]
@@ -9,6 +10,7 @@ def parse_view(view):
     suburb =  [i['key'][3]['suburb'] if 'suburb' in i['key'][3].keys() else '' for i in view['rows']] 
     county =  [i['key'][3]['county'] if 'county' in i['key'][3].keys() else '' for i in view['rows']] 
     state =  [i['key'][3]['state'] if 'state' in i['key'][3].keys() else '' for i in view['rows']] 
+    country =  [i['key'][3]['country'] if 'country' in i['key'][3].keys() else '' for i in view['rows']] 
     lat =  [i['key'][3]['lat']for i in view['rows']]
     lon =  [i['key'][3]['lon']for i in view['rows']]
     count = [i['value'] for i in view['rows']]
@@ -17,6 +19,7 @@ def parse_view(view):
              'city':city,
              'county':county,
              'state':state,
+             'country':country,
              'year':year,
              'topic':topic,
              'avg_sentiment':sentiment,
@@ -27,6 +30,15 @@ def parse_view(view):
              'lon':lon,
              'count':count})
     return df
+
+def get_view(precision):
+    params = (
+        ('reduce', 'true'),
+        ('group', 'true'),
+        ('include_docs', 'false'),
+    )
+    response = requests.get('http://45.113.235.78:5984/ui_db/_design/'+precision+'/_view/'+precision+'_view', params=params, auth=('admin', 'MGZjZGU5N'))
+    return parse_view(response.json())
 
 def filter_view(df,year='All',topic='All',grouping='None'):
     df1 = df.copy()

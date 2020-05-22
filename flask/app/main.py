@@ -9,7 +9,6 @@ import pathlib
 import flask
 # import couchdb
 # from geopy.distance import great_circle as gc
-import requests
 
 from dash.dependencies import Input, Output, State
 from plotly import graph_objs as go
@@ -27,13 +26,8 @@ app = dash.Dash(
 )
 
 # Retrieve CouchDB Views
-params = (
-    ('reduce', 'true'),
-    ('group', 'true'),
-    ('include_docs', 'false'),
-)
-response = requests.get('http://45.113.235.78:5984/ui_db/_design/suburb/_view/suburb_view', params=params, auth=('admin', 'MGZjZGU5N'))
-df_view = parse_view(response.json())
+# df_view = get_view('suburb')
+
 
 # '''
 # This section is using different data on my personal instance.
@@ -166,10 +160,6 @@ app.layout = html.Div(
                                         html.Label('Select Topic:'),
                                         dcc.Dropdown(
                                             id="topic-dropdown",
-                                            options=[
-                                                {"label": i, "value": i}
-                                                for i in df_view.topic.unique().tolist()+['All']
-                                            ],
                                             placeholder="Select Topic",
                                             value='All',
 											clearable=False
@@ -193,28 +183,24 @@ app.layout = html.Div(
                                         html.Label('Filter Year:'),
                                         dcc.Dropdown(
                                             id="year-dropdown",
-                                            options=[
-                                                {"label": i, "value": i}
-                                                for i in df_view.year.unique().tolist()+['All']
-                                            ],
                                             placeholder="Select year",
                                             value='All',
 											clearable=False
                                         ),
                                         html.Label('Grouping Level:'),
                                         dcc.Dropdown(
-                                            id="grouping-dropdown",
+                                            id="precision-dropdown",
                                             options=[
+                                                {'label':'Country' ,'value':'country'},
                                                 {'label':'State' ,'value':'state'},
                                                 {'label':'County' ,'value':'county'},
                                                 {'label': 'City','value':'city'},
-                                                {'label': 'Suburb','value':'suburb'},
-                                                {'label': 'None','value':'None'}
+                                                {'label': 'Suburb','value':'suburb'}
                                             ],
                                             placeholder="Select sentiment",
-                                            value='None',
+                                            value='suburb',
 											clearable=False
-                                        )
+                                        ),
                                     ],
                                 ),
                                 html.Label('Map Style:'),
@@ -233,6 +219,7 @@ app.layout = html.Div(
                                                          value='streets',
                                                          labelStyle={'display': 'inline-block'}
                                                          )]),
+                                html.Div(id='rawview-data', style={'display': 'none'}),
                                 html.Div(id='view-data', style={'display': 'none'}),
                             ],
                         ),
@@ -249,14 +236,41 @@ app.layout = html.Div(
 )
 
 @app.callback(
-    Output('view-data','children'),
-    [Input("year-dropdown", "value"),
-    Input("topic-dropdown", "value"),
-    Input("grouping-dropdown", "value")]
+     Output('rawview-data','children'),
+    [Input("precision-dropdown","value")]
 )
-def filter_data(selectedYear, selectedTopic, selectedGrouping):
+def get_data(selectedPrecision):
+    data = get_view(selectedPrecision)
+    return data.to_json(orient='split')
+
+@app.callback(
+    Output('topic-dropdown', 'options'),
+    [Input("rawview-data",'children'),])
+def set_topic_options(jsonified_rawdata):
+    topic_map = {1:"Covid App",2:"Politics"}
+    df_view = pd.read_json(jsonified_rawdata, orient='split')
+    return [{"label": topic_map.get(i,i), "value": i}
+        for i in df_view.topic.unique().tolist()+['All']]
+
+@app.callback(
+    Output('year-dropdown', 'options'),
+    [Input("rawview-data",'children'),])
+def set_year_options(jsonified_rawdata):
+    df_view = pd.read_json(jsonified_rawdata, orient='split')
+    return [{"label": i, "value": i}
+         for i in df_view.year.unique().tolist()+['All']]
+
+@app.callback(
+    Output('view-data','children'),
+    [Input("rawview-data",'children'),
+    Input("year-dropdown", "value"),
+    Input("topic-dropdown", "value"),
+    Input("precision-dropdown", "value")]
+)
+def filter_data(jsonified_rawdata, selectedYear, selectedTopic, selectedGrouping):
+    df_view = pd.read_json(jsonified_rawdata, orient='split')
     df = filter_view(df_view,selectedYear,selectedTopic,selectedGrouping)
-    df = df[df.iloc[:,0]!='']
+    # df = df[df.iloc[:,0]!='']
     data = df.to_json(orient='split')
     return data
 
@@ -365,11 +379,11 @@ def update_graph(jsonified_data, selectedLayer, selectedStyle):
             Input("map-graph","hoverData")],
 )
 def update_gauge(jsonified_data,idx):
+    df = pd.read_json(jsonified_data, orient='split')
     if idx is None:
-        return df_view["avg_sentiment"].mean()
+        return df["avg_sentiment"].mean()
     if idx["points"][0]["curveNumber"]==1:
         index = idx["points"][0]["pointIndex"] 
-    df = pd.read_json(jsonified_data, orient='split')
     value = df.iloc[index]["avg_sentiment"]
     return value
 
@@ -379,11 +393,11 @@ def update_gauge(jsonified_data,idx):
             Input("map-graph","hoverData")],
 )
 def update_led(jsonified_data,idx):
+    df = pd.read_json(jsonified_data, orient='split')
     if idx is None:
-        return df_view["count"].sum()
+        return df["count"].sum()
     if idx["points"][0]["curveNumber"]==1:
         index = idx["points"][0]["pointIndex"] 
-    df = pd.read_json(jsonified_data, orient='split')
     value = df.iloc[index]["count"]
     return value
 
