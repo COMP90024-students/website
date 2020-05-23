@@ -90,7 +90,8 @@ base_layer = {'Median Age': median_age,
               'Median Income': median_income,
               'Mental Health': mental_health,
               'Overseas-born Rate': overseas_born,
-              'Employment Rate': employment_rate
+              'Employment Rate': employment_rate,
+              'None': None
               }
 
 # Layout of Dash App
@@ -138,7 +139,8 @@ app.layout = html.Div(
                     className="seven columns bg-grey",
                     children=[
                         dcc.Loading(id = "loading-icon1", 
-                        children=[dcc.Graph(id="map-graph")],
+                        children=[dcc.Graph(id="map-graph",
+                                    clear_on_unhover = True)],
                         type='circle')
                     ],
                 ),
@@ -157,14 +159,7 @@ app.layout = html.Div(
                                 html.Div(
                                     className="div-for-dropdown",
                                     children=[
-                                        html.Label('Select Topic:'),
-                                        dcc.Dropdown(
-                                            id="topic-dropdown",
-                                            placeholder="Select Topic",
-                                            value='All',
-											clearable=False
-                                        ),
-                                        html.Label('Select regional statistic:'),
+                                        html.Label('Select Regional Statistic:'),
                                         dcc.Dropdown(
                                             id="layer-dropdown",
                                             options=[
@@ -174,6 +169,16 @@ app.layout = html.Div(
                                             placeholder="Select a base layer",
                                             value=[i for i in base_layer][0],
 											clearable=False
+                                        ),
+                                        # html.P("Statistic Description:"),
+                                        # html.P(id="stat-info"),
+                                        html.Label('Select Tweet Topic:'),
+                                        dcc.Dropdown(
+                                            id="topic-dropdown",
+                                            placeholder="Select Topic",
+                                            value='All',
+											clearable=False,
+                                            multi=True
                                         ),
                                     ],
                                 ),
@@ -198,7 +203,7 @@ app.layout = html.Div(
                                                 {'label': 'Suburb','value':'suburb'}
                                             ],
                                             placeholder="Select sentiment",
-                                            value='suburb',
+                                            value='county',
 											clearable=False
                                         ),
                                     ],
@@ -247,10 +252,23 @@ def get_data(selectedPrecision):
     Output('topic-dropdown', 'options'),
     [Input("rawview-data",'children'),])
 def set_topic_options(jsonified_rawdata):
-    topic_map = {1:"Covid App",2:"Politics"}
+    topic_map = {0:"General",1:"Covid APP",2:"Politics",3:"Politics & Covid APP"}
     df_view = pd.read_json(jsonified_rawdata, orient='split')
     return [{"label": topic_map.get(i,i), "value": i}
         for i in df_view.topic.unique().tolist()+['All']]
+
+# @app.callback(
+#     Output('stat-info', 'children'),
+#     [Input('layer-dropdown', 'value'),])
+# def show_stat_info(stat):
+#     info_dict = {'Median Age': 'a',
+#               'Median Income': 'b',
+#               'Mental Health': 'Total number of mental health related hospitalisations per 10,000 people.',
+#               'Overseas-born Rate': 'Percentage of population who born overseas',
+#               'Employment Rate': 'f',
+#               'None': ''
+#               }
+#     return info_dict[stat]
 
 @app.callback(
     Output('year-dropdown', 'options'),
@@ -290,31 +308,30 @@ def update_graph(jsonified_data, selectedLayer, selectedStyle):
     bearing = 0
     colours ='#ffffff' if selectedStyle=='dark' else '#000000'
     df = pd.read_json(jsonified_data, orient='split')
+    regstat = [go.Choroplethmapbox(geojson=base_layer[selectedLayer],
+                            locations=[i['id']
+                                       for i in base_layer[selectedLayer]['features']],
+                            z=[str(i['properties']['values'])
+                                for i in base_layer[selectedLayer]['features']],
+                            colorscale='Portland',
+                            marker={'opacity': 0.6},
+                            text=[i['properties']['name']
+                                  for i in base_layer[selectedLayer]['features']],
+                            hovertemplate='<b>Suburb</b>: <b>%{text}</b>' +
+                            '<br><b>'+selectedLayer+' </b>: %{z}<br>',
+                            marker_line_color=colours, 
+                            name = 'Regional Statistic',
+                            colorbar=dict(
+            title=selectedLayer,
+            x=0.01,
+            xpad=0,
+            nticks=5,
+            tickfont=dict(color=colours),
+            titlefont=dict(color=colours),
+            thicknessmode="pixels"),
+        )] if selectedLayer!='None' else []
     return go.Figure(
-        data=[
-            # Plot base layer
-            go.Choroplethmapbox(geojson=base_layer[selectedLayer],
-                                locations=[i['id']
-                                           for i in base_layer[selectedLayer]['features']],
-                                z=[str(i['properties']['values'])
-                                    for i in base_layer[selectedLayer]['features']],
-                                colorscale='Portland',
-                                marker={'opacity': 0.6},
-                                text=[i['properties']['name']
-                                      for i in base_layer[selectedLayer]['features']],
-                                hovertemplate='<b>Suburb</b>: <b>%{text}</b>' +
-                                '<br><b>'+selectedLayer+' </b>: %{z}<br>',
-                                marker_line_color=colours, 
-                                name = 'Regional Statistic',
-                                colorbar=dict(
-                title=selectedLayer,
-                x=0.01,
-                xpad=0,
-                nticks=5,
-                tickfont=dict(color=colours),
-                titlefont=dict(color=colours),
-                thicknessmode="pixels"),
-            ),
+        data = regstat + [
             Scattermapbox(
             lat=df.lat ,
             lon=df.lon ,

@@ -45,7 +45,7 @@ def filter_view(df,year='All',topic='All',grouping='None'):
     if year!='All':
         df=df.loc[df.year==year]
     if topic!='All':
-        df=df.loc[df.topic==topic]
+        df=df.loc[df.topic.isin(topic)]
     if grouping!='None':
         df=df.groupby(grouping) \
               .apply(lambda x: pd.Series({
@@ -53,9 +53,9 @@ def filter_view(df,year='All',topic='All',grouping='None'):
                   'lon'       : x['lon'].mean(),
                   'count'      : x['count'].sum(),
                   'avg_sentiment'  : x['avg_sentiment'].mean(),
-                  'pos_sentiment_pct': np.round(sum(x['avg_sentiment']==1)/x.shape[0]*100,2),
-                  'neg_sentiment_pct': np.round(sum(x['avg_sentiment']==-1)/x.shape[0]*100,2),
-                  'neu_sentiment_pct': np.round(sum(x['avg_sentiment']==0)/x.shape[0]*100,2)
+                  'pos_sentiment_pct': "{:0.2f}".format(sum(x['avg_sentiment']==1)/x.shape[0]*100),
+                  'neg_sentiment_pct': "{:0.2f}".format(sum(x['avg_sentiment']==-1)/x.shape[0]*100),
+                  'neu_sentiment_pct': "{:0.2f}".format(sum(x['avg_sentiment']==0)/x.shape[0]*100)
               })
             ).reset_index()
     return df
