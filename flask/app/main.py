@@ -8,7 +8,7 @@ import json
 import pathlib
 import flask
 import re
-import os
+
 # import couchdb
 # from geopy.distance import great_circle as gc
 
@@ -20,6 +20,7 @@ from app import server
 
 from app.visualisation import plotly_bargraph
 from app.transform import * 
+from app.config import COUCHDB_URL, COUCHDB_USER, COUCHDB_PASSWORD
 
 
 app = dash.Dash(
@@ -73,9 +74,6 @@ mapbox_access_token = "pk.eyJ1IjoicmV6YXRhbWEiLCJhIjoiY2s1M2l6Y3V0MDBnbjNlcmpkNn
 
 PATH = pathlib.Path(__file__).parent
 DATA_PATH = PATH.joinpath("Aurin").resolve()
-COUCHDB_HOST = os.environ.get("COUCHDB_HOST", "localhost")
-COUCHDB_USER = os.environ.get("COUCHDB_USER", "guest")
-COUCHDB_PASSWORD = os.environ.get("COUCHDB_PASSWORD", "guest")
 
 # Melbourne Map Layer
 with open(DATA_PATH.joinpath('median_age.json')) as json_file:

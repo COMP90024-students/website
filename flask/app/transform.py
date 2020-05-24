@@ -2,6 +2,9 @@ import numpy as np
 import pandas as pd
 import requests
 
+from app.config import COUCHDB_URL, COUCHDB_USER, COUCHDB_PASSWORD
+
+
 def parse_view(view):
     year = [i['key'][0] for i in view['rows']]
     topic = [i['key'][1] for i in view['rows']] 
@@ -37,7 +40,7 @@ def get_view(precision):
         ('group', 'true'),
         ('include_docs', 'false'),
     )
-    response = requests.get('http://45.113.235.78:5984/ui_db/_design/'+precision+'/_view/'+precision+'_view', params=params, auth=('admin', 'MGZjZGU5N'))
+    response = requests.get(f'{COUCHDB_URL}/ui_db/_design/'+precision+'/_view/'+precision+'_view', params=params, auth=(COUCHDB_USER, COUCHDB_PASSWORD))
     return parse_view(response.json())
 
 def filter_view(df,year='All',topic='All',grouping='None'):
