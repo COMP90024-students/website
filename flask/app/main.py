@@ -8,6 +8,7 @@ import json
 import pathlib
 import flask
 import re
+import os
 # import couchdb
 # from geopy.distance import great_circle as gc
 
@@ -72,6 +73,9 @@ mapbox_access_token = "pk.eyJ1IjoicmV6YXRhbWEiLCJhIjoiY2s1M2l6Y3V0MDBnbjNlcmpkNn
 
 PATH = pathlib.Path(__file__).parent
 DATA_PATH = PATH.joinpath("Aurin").resolve()
+COUCHDB_HOST = os.environ.get("COUCHDB_HOST", "localhost")
+COUCHDB_USER = os.environ.get("COUCHDB_USER", "guest")
+COUCHDB_PASSWORD = os.environ.get("COUCHDB_PASSWORD", "guest")
 
 # Melbourne Map Layer
 with open(DATA_PATH.joinpath('median_age.json')) as json_file:
@@ -391,7 +395,7 @@ def update_bargraph_plot(topics):
             ('group', 'false'),
             ('include_docs', 'false'),
          )
-    response = requests.get('http://45.113.235.78:5984/ui_db/_design/a/_view/new-view', params=params, auth=('admin', 'MGZjZGU5N'))
+    response = requests.get(f'http://{COUCHDB_HOST}:5984/ui_db/_design/a/_view/new-view', params=params, auth=(COUCHDB_USER, COUCHDB_PASSWORD))
     if topics == "All":
         text_ = "".join([i["value"].lower() for i in response.json()["rows"] if i["key"]])
     else:
