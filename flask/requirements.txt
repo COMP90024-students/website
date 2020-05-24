@@ -7,6 +7,7 @@ dash-daq==0.1.0
 pandas==0.24.1
 Click==7.0
 Flask==1.0.2
+flask-caching==1.8.0
 itsdangerous==1.1.0
 Jinja2==2.10
 MarkupSafe==1.1.1

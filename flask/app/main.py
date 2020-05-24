@@ -17,6 +17,7 @@ from plotly import graph_objs as go
 from plotly.graph_objs import *
 from datetime import datetime as dt
 from app import server
+from flask_caching import Cache
 
 from app.visualisation import plotly_bargraph
 from app.transform import * 
@@ -27,47 +28,13 @@ app = dash.Dash(
     __name__, server = server, url_base_pathname = '/',
     meta_tags=[{"name": "viewport", "content": "width=device-width"}]
 )
+cache = Cache(app.server, config={
+    'CACHE_TYPE': 'filesystem',
+    'CACHE_DIR': 'cache-directory'
+})
 
-# Retrieve CouchDB Views
-# df_view = get_view('suburb')
-
-
-# '''
-# This section is using different data on my personal instance.
-# Its used for pressenting top 15 most frequent words
-# Will remove this section after carlos provide raw tweet text on his DB
-# '''
-# # Connect couchdb
-# user = "reza"
-# password = "reza"
-# couchserver = couchdb.Server("http://%s:%s@115.146.92.235:5984/" % (user, password))
-# db = couchserver['db_test']
-# # Get list of big cities in AU
-# cap = pd.read_csv('/home/rezatama/Downloads/capital.csv')
-# city = list(zip(cap['latitude'],cap['longitude']))
-# # Get twit data
-# lat_ = []
-# lon_ = []
-# lat_adj = []
-# lon_adj= []
-# text_ = []
-# sntm_ = []
-# for item in db.view('place/new-view'):
-#     if not item.value[0]:
-#         near_city=city[np.argmin([gc((item.key[1],item.key[0]),i).km for i in city])]
-#         lat_adj.append(near_city[0])
-#         lon_adj.append(near_city[1])
-#     else:
-#         lat_adj.append(item.key[1])
-#         lon_adj.append(item.key[0])
-#     lat_.append(item.key[1])
-#     lon_.append(item.key[0])
-#     text_.append(item.value[1])
-#     sntm_.append(item.value[2])
-# df_twit = pd.DataFrame({'Latitude':lat_,'Longitude':lon_,'Sentiment':sntm_})
-# df_twit_grp = df_twit.groupby(['Latitude','Longitude'],
-#     as_index=False).agg({'Sentiment':[('Sentiment Score','mean'),
-#     ('Total Tweet','count')]})
+# Set cache timeout for 30 mins
+TIMEOUT = 1800
 
 # Plotly mapbox public token
 mapbox_access_token = "pk.eyJ1IjoicmV6YXRhbWEiLCJhIjoiY2s1M2l6Y3V0MDBnbjNlcmpkNnI2bG56NiJ9.q7lwXHHVHLyGJSn2MV8fPA"
@@ -91,7 +58,7 @@ cap = pd.read_csv(DATA_PATH.joinpath('capital.csv'))
 
 base_layer = {'Median Age': median_age,
               'Median Income': median_income,
-              'Mental Health': mental_health,
+              'Mental Health \n(Hospitalisation per 10,000 people)': mental_health,
               'Overseas-born Rate': overseas_born,
               'Employment Rate': employment_rate,
               'None': None
@@ -197,6 +164,9 @@ app.layout = html.Div(
                                             value='All',
 											clearable=False
                                         ),
+                                        dcc.Loading(id = "loading-icon2", 
+                        children=[html.Div(id='rawview-data', style={'display': 'none'})],
+                        type='circle'),
                                         html.Label('Grouping Level:'),
                                         dcc.Dropdown(
                                             id="precision-dropdown",
@@ -229,13 +199,12 @@ app.layout = html.Div(
                                                          value='streets',
                                                          labelStyle={'display': 'inline-block'}
                                                          )]),
-                                html.Div(id='rawview-data', style={'display': 'none'}),
                                 html.Div(id='view-data', style={'display': 'none'}),
                             ],
                         ),
                         dcc.Markdown(
                             children=[
-                                "Source: [AURIN](https://aurin.org.au/)"
+                                "Source: [AURIN](https://aurin.org.au/), [Twitter](https://twitter.com/)"
                             ]
                         ),
                     ],
@@ -249,6 +218,7 @@ app.layout = html.Div(
      Output('rawview-data','children'),
     [Input("precision-dropdown","value")]
 )
+@cache.memoize(timeout=TIMEOUT)
 def get_data(selectedPrecision):
     data = get_view(selectedPrecision)
     return data.to_json(orient='split')
@@ -261,19 +231,6 @@ def set_topic_options(jsonified_rawdata):
     df_view = pd.read_json(jsonified_rawdata, orient='split')
     return [{"label": topic_map.get(i,i), "value": i}
         for i in df_view.topic.unique().tolist()+['All']]
-
-# @app.callback(
-#     Output('stat-info', 'children'),
-#     [Input('layer-dropdown', 'value'),])
-# def show_stat_info(stat):
-#     info_dict = {'Median Age': 'a',
-#               'Median Income': 'b',
-#               'Mental Health': 'Total number of mental health related hospitalisations per 10,000 people.',
-#               'Overseas-born Rate': 'Percentage of population who born overseas',
-#               'Employment Rate': 'f',
-#               'None': ''
-#               }
-#     return info_dict[stat]
 
 @app.callback(
     Output('year-dropdown', 'options'),
@@ -293,7 +250,6 @@ def set_year_options(jsonified_rawdata):
 def filter_data(jsonified_rawdata, selectedYear, selectedTopic, selectedGrouping):
     df_view = pd.read_json(jsonified_rawdata, orient='split')
     df = filter_view(df_view,selectedYear,selectedTopic,selectedGrouping)
-    # df = df[df.iloc[:,0]!='']
     data = df.to_json(orient='split')
     return data
 
@@ -393,7 +349,7 @@ def update_bargraph_plot(topics):
             ('group', 'false'),
             ('include_docs', 'false'),
          )
-    response = requests.get(f'http://{COUCHDB_HOST}:5984/ui_db/_design/a/_view/new-view', params=params, auth=(COUCHDB_USER, COUCHDB_PASSWORD))
+    response = requests.get(f'{COUCHDB_URL}/ui_db/_design/a/_view/new-view', params=params, auth=(COUCHDB_USER, COUCHDB_PASSWORD))
     if topics == "All":
         text_ = "".join([i["value"].lower() for i in response.json()["rows"] if i["key"]])
     else:
@@ -401,11 +357,6 @@ def update_bargraph_plot(topics):
     pattern = '(#[\w\u0E00-\u0E7F]+)'
     hashtags = re.findall(pattern,text_)
     bargraph = plotly_bargraph(" ".join(hashtags))
-    # if idx is None:
-    #     bargraph = plotly_bargraph(text_)
-    # else:
-    #     index = [i["pointIndex"] for i in idx["points"] if i["curveNumber"]==1]
-    #     bargraph = plotly_bargraph(np.array(text_)[index])
     return(bargraph)
 
 @app.callback(
