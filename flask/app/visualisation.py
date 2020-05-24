@@ -6,14 +6,14 @@ def plotly_bargraph(text):
     """A wonderful function that returns figure data for three equally
     wonderful plots: wordcloud, frequency histogram and treemap"""
 
-    if len(text) < 1:
-        return {}
+    # if len(text) < 1:
+    #     return {}
 
-    topic_words = ('corona','coronavirus','covid','covid-19','covid19','viru')
-    pattern = r'|'.join(topic_words)
-    text = [re.sub(pattern,'',i) for i in text]
-    # join all documents in corpus
-    text = " ".join(text)
+    # topic_words = ('corona','coronavirus','covid','covid-19','covid19','viru')
+    # pattern = r'|'.join(topic_words)
+    # text = [re.sub(pattern,'',i) for i in text]
+    # # join all documents in corpus
+    # text = " ".join(text)
 
     word_cloud = WordCloud(stopwords=set(STOPWORDS), max_words=50,
      max_font_size=90, collocations=False)
@@ -98,8 +98,8 @@ def plotly_bargraph(text):
             }
         ],
         "layout": {
-        "margin": dict(t=40, b=20, l=100, r=20, pad=4),
-        "title":'Word Relative Frequency',
+        "margin": dict(t=40, b=20, l=130, r=20, pad=4),
+        "title":'Hashtag Relative Frequency',
         "plot_bgcolor": "#F6F6F4",
         "paper_bgcolor": "#F6F6F4",},
         }

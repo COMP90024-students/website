@@ -7,6 +7,7 @@ import numpy as np
 import json
 import pathlib
 import flask
+import re
 # import couchdb
 # from geopy.distance import great_circle as gc
 
@@ -103,8 +104,10 @@ app.layout = html.Div(
                 html.Div(
                     className="three columns bg-white",
                     children=[
-                        dcc.Graph(id="bargraph",
-                                  config={'displayModeBar': False}),
+                        dcc.Loading(id = "loading-icon0", 
+                        children=[dcc.Graph(id="bargraph",
+                                  config={'displayModeBar': False})],
+                        type='circle'),
                         daq.Gauge(
                             id="sentiment-gauge",
                             style={
@@ -377,18 +380,31 @@ def update_graph(jsonified_data, selectedLayer, selectedStyle):
         ),
     )
 
-# @app.callback(
-#     Output("bargraph", "figure"),
-#     [Input("map-graph","selectedData")]
-# )
-# def update_bargraph_plot(idx):
-#     """ Callback to rerender bargraph plot """
-#     if idx is None:
-#         bargraph = plotly_bargraph(text_)
-#     else:
-#         index = [i["pointIndex"] for i in idx["points"] if i["curveNumber"]==1]
-#         bargraph = plotly_bargraph(np.array(text_)[index])
-#     return(bargraph)
+@app.callback(
+    Output("bargraph", "figure"),
+    [Input("topic-dropdown","value")]
+)
+def update_bargraph_plot(topics):
+    """ Callback to rerender bargraph plot """
+    params = (
+            ('reduce', 'false'),
+            ('group', 'false'),
+            ('include_docs', 'false'),
+         )
+    response = requests.get('http://45.113.235.78:5984/ui_db/_design/a/_view/new-view', params=params, auth=('admin', 'MGZjZGU5N'))
+    if topics == "All":
+        text_ = "".join([i["value"].lower() for i in response.json()["rows"] if i["key"]])
+    else:
+        text_ = "".join([i["value"].lower() for i in response.json()["rows"] if i["key"] in topics])
+    pattern = '(#[\w\u0E00-\u0E7F]+)'
+    hashtags = re.findall(pattern,text_)
+    bargraph = plotly_bargraph(" ".join(hashtags))
+    # if idx is None:
+    #     bargraph = plotly_bargraph(text_)
+    # else:
+    #     index = [i["pointIndex"] for i in idx["points"] if i["curveNumber"]==1]
+    #     bargraph = plotly_bargraph(np.array(text_)[index])
+    return(bargraph)
 
 @app.callback(
     output=Output("sentiment-gauge", "value"),
