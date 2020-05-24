@@ -162,7 +162,7 @@ app.layout = html.Div(
                                 html.Div(
                                     className="div-for-dropdown",
                                     children=[
-                                        html.Label('Select Regional Statistic:'),
+                                        html.Label('Select Social, Health & Financial Measure:'),
                                         dcc.Dropdown(
                                             id="layer-dropdown",
                                             options=[
@@ -175,7 +175,7 @@ app.layout = html.Div(
                                         ),
                                         # html.P("Statistic Description:"),
                                         # html.P(id="stat-info"),
-                                        html.Label('Select Tweet Topic:'),
+                                        html.Label('Select Topic for Sentiment Analysis:'),
                                         dcc.Dropdown(
                                             id="topic-dropdown",
                                             placeholder="Select Topic",
