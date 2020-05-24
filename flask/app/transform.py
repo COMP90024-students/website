@@ -44,7 +44,7 @@ def filter_view(df,year='All',topic='All',grouping='None'):
     df1 = df.copy()
     if year!='All':
         df=df.loc[df.year==year]
-    if topic!='All':
+    if topic!='All' and 'All' not in topic:
         df=df.loc[df.topic.isin(topic)]
     if grouping!='None':
         df=df.groupby(grouping) \
