@@ -9,9 +9,6 @@ import pathlib
 import flask
 import re
 
-# import couchdb
-# from geopy.distance import great_circle as gc
-
 from dash.dependencies import Input, Output, State
 from plotly import graph_objs as go
 from plotly.graph_objs import *
@@ -148,7 +145,7 @@ app.layout = html.Div(
                                         dcc.Dropdown(
                                             id="topic-dropdown",
                                             placeholder="Select Topic",
-                                            value='All',
+                                            value=[2],
 											clearable=False,
                                             multi=True
                                         ),
@@ -161,7 +158,7 @@ app.layout = html.Div(
                                         dcc.Dropdown(
                                             id="year-dropdown",
                                             placeholder="Select year",
-                                            value='All',
+                                            value=2020,
 											clearable=False
                                         ),
                                         dcc.Loading(id = "loading-icon2", 
@@ -247,6 +244,7 @@ def set_year_options(jsonified_rawdata):
     Input("topic-dropdown", "value"),
     Input("precision-dropdown", "value")]
 )
+@cache.memoize(timeout=TIMEOUT)
 def filter_data(jsonified_rawdata, selectedYear, selectedTopic, selectedGrouping):
     df_view = pd.read_json(jsonified_rawdata, orient='split')
     df = filter_view(df_view,selectedYear,selectedTopic,selectedGrouping)
@@ -338,19 +336,24 @@ def update_graph(jsonified_data, selectedLayer, selectedStyle):
         ),
     )
 
+@cache.memoize(timeout=TIMEOUT)
+def get_text():
+    params = (
+                ('reduce', 'false'),
+                ('group', 'false'),
+                ('include_docs', 'false'),
+             )
+    response = requests.get(f'{COUCHDB_URL}/ui_db/_design/a/_view/new-view', params=params, auth=(COUCHDB_USER, COUCHDB_PASSWORD))
+    return response
+
 @app.callback(
     Output("bargraph", "figure"),
     [Input("topic-dropdown","value")]
 )
 def update_bargraph_plot(topics):
     """ Callback to rerender bargraph plot """
-    params = (
-            ('reduce', 'false'),
-            ('group', 'false'),
-            ('include_docs', 'false'),
-         )
-    response = requests.get(f'{COUCHDB_URL}/ui_db/_design/a/_view/new-view', params=params, auth=(COUCHDB_USER, COUCHDB_PASSWORD))
-    if topics == "All":
+    response = get_text()
+    if "All" in topics:
         text_ = "".join([i["value"].lower() for i in response.json()["rows"] if i["key"]])
     else:
         text_ = "".join([i["value"].lower() for i in response.json()["rows"] if i["key"] in topics])
@@ -370,8 +373,8 @@ def update_gauge(jsonified_data,idx):
         return df["avg_sentiment"].mean()
     if idx["points"][0]["curveNumber"]==1:
         index = idx["points"][0]["pointIndex"] 
-    value = df.iloc[index]["avg_sentiment"]
-    return value
+        value = df.iloc[index]["avg_sentiment"]
+        return value
 
 @app.callback(
     output=Output("tweet-led", "value"),
