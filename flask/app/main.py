@@ -161,8 +161,9 @@ app.layout = html.Div(
                                             value=2020,
 											clearable=False
                                         ),
+                                        # dcc.Store(id='local', storage_type='local')
                                         dcc.Loading(id = "loading-icon2", 
-                        children=[html.Div(id='rawview-data', style={'display': 'none'})],
+                        children=[dcc.Store(id='rawview-data', storage_type='local')],
                         type='circle'),
                                         html.Label('Grouping Level:'),
                                         dcc.Dropdown(
@@ -197,7 +198,7 @@ app.layout = html.Div(
                                                          labelStyle={'display': 'inline-block'}
                                                          )]),
                                                          dcc.Loading(id = "loading-icon3", 
-                        children=[html.Div(id='view-data', style={'display': 'none'})],
+                        children=[dcc.Store(id='view-data', storage_type='local')],
                         type='circle'),
                             ],
                         ),
@@ -214,7 +215,7 @@ app.layout = html.Div(
 )
 
 @app.callback(
-     Output('rawview-data','children'),
+     Output('rawview-data','data'),
     [Input("precision-dropdown","value")]
 )
 @cache.memoize(timeout=TIMEOUT)
@@ -224,7 +225,7 @@ def get_data(selectedPrecision):
 
 @app.callback(
     Output('topic-dropdown', 'options'),
-    [Input("rawview-data",'children'),])
+    [Input("rawview-data",'data'),])
 def set_topic_options(jsonified_rawdata):
     topic_map = {0:"General",1:"Covid APP",2:"Politics",3:"Politics & Covid APP"}
     df_view = pd.read_json(jsonified_rawdata, orient='split')
@@ -233,15 +234,15 @@ def set_topic_options(jsonified_rawdata):
 
 @app.callback(
     Output('year-dropdown', 'options'),
-    [Input("rawview-data",'children'),])
+    [Input("rawview-data",'data'),])
 def set_year_options(jsonified_rawdata):
     df_view = pd.read_json(jsonified_rawdata, orient='split')
     return [{"label": i, "value": i}
          for i in df_view.year.unique().tolist()+['All']]
 
 @app.callback(
-    Output('view-data','children'),
-    [Input("rawview-data",'children'),
+    Output('view-data','data'),
+    [Input("rawview-data",'data'),
     Input("year-dropdown", "value"),
     Input("topic-dropdown", "value"),
     Input("precision-dropdown", "value")]
@@ -275,7 +276,7 @@ def get_scatter(df):
 @app.callback(
     Output("map-graph", "figure"),
     [
-        Input('view-data','children'),
+        Input('view-data','data'),
         Input("layer-dropdown", "value"),
         Input("mapstyle-radio", "value")
     ],
@@ -370,7 +371,7 @@ def update_bargraph_plot(topics):
 
 @app.callback(
     output=Output("sentiment-gauge", "value"),
-    inputs=[Input("view-data","children"),
+    inputs=[Input("view-data","data"),
             Input("map-graph","hoverData")],
 )
 def update_gauge(jsonified_data,idx):
@@ -384,7 +385,7 @@ def update_gauge(jsonified_data,idx):
 
 @app.callback(
     output=Output("tweet-led", "value"),
-    inputs=[Input("view-data","children"),
+    inputs=[Input("view-data","data"),
             Input("map-graph","hoverData")],
 )
 def update_led(jsonified_data,idx):
