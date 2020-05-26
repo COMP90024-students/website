@@ -268,7 +268,6 @@ def filter_view(df,year='All',topic='All',grouping='None'):
     Input("topic-dropdown", "value"),
     Input("precision-dropdown", "value")]
 )
-@cache.memoize(timeout=TIMEOUT)
 def filter_data(jsonified_rawdata, selectedYear, selectedTopic, selectedGrouping):
     df_view = pd.read_json(jsonified_rawdata, orient='split')
     df = filter_view(df_view,selectedYear,selectedTopic,selectedGrouping)
@@ -302,7 +301,6 @@ def get_scatter(df):
         Input("mapstyle-radio", "value")
     ],
 )
-@cache.memoize(timeout=TIMEOUT)
 def update_graph(jsonified_data, selectedLayer, selectedStyle):
     zoom = 3.7
     latInitial = -25.2744
