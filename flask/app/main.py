@@ -248,7 +248,7 @@ def filter_view(df,year='All',topic='All',grouping='None'):
     if topic!='All' and 'All' not in topic:
         df=df.loc[df.topic.isin(topic)]
     if grouping!='None':
-        df=df.groupby(grouping) \
+        df=df.groupby(grouping,observed=True) \
               .apply(lambda x: pd.Series({
                   'lat'       : x['lat'].mean(),
                   'lon'       : x['lon'].mean(),
