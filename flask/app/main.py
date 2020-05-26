@@ -242,7 +242,6 @@ def set_year_options(jsonified_rawdata):
 
 @cache.memoize(timeout=TIMEOUT)
 def filter_view(df,year='All',topic='All',grouping='None'):
-    df1 = df.copy()
     if year!='All':
         df=df.loc[df.year==year]
     if topic!='All' and 'All' not in topic:
