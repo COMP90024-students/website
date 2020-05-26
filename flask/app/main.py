@@ -196,7 +196,9 @@ app.layout = html.Div(
                                                          value='streets',
                                                          labelStyle={'display': 'inline-block'}
                                                          )]),
-                                html.Div(id='view-data', style={'display': 'none'}),
+                                                         dcc.Loading(id = "loading-icon3", 
+                        children=[html.Div(id='view-data', style={'display': 'none'})],
+                        type='circle'),
                             ],
                         ),
                         dcc.Markdown(
@@ -251,6 +253,24 @@ def filter_data(jsonified_rawdata, selectedYear, selectedTopic, selectedGrouping
     data = df.to_json(orient='split')
     return data
 
+@cache.memoize(timeout=TIMEOUT)
+def get_scatter(df):
+    scatter = Scattermapbox(
+                lat=df.lat ,
+                lon=df.lon ,
+                mode="markers",
+                customdata=df.filter(regex='pct$|count$', axis=1).sort_index(axis=1).to_numpy(),
+                text=df.iloc[:,0],
+                hovertemplate='<b>'+df.columns[0].title() +' </b>: %{text} <br>' +
+                             '<br><b>Positive Sentiment</b>: %{customdata[3]} % ' +
+                             '<br><b>Negative Sentiment</b>: %{customdata[1]} % ' +
+                             '<br><b>Neutral Sentiment</b>: %{customdata[2]} % ',
+                marker_color="#FF1818",
+                marker_size=np.log1p(df['count'])*10,
+                name = 'Tweet Stats'
+                )
+    return [scatter]
+
 # MELB MAP
 @app.callback(
     Output("map-graph", "figure"),
@@ -260,6 +280,7 @@ def filter_data(jsonified_rawdata, selectedYear, selectedTopic, selectedGrouping
         Input("mapstyle-radio", "value")
     ],
 )
+@cache.memoize(timeout=TIMEOUT)
 def update_graph(jsonified_data, selectedLayer, selectedStyle):
     zoom = 3.7
     latInitial = -25.2744
@@ -290,22 +311,7 @@ def update_graph(jsonified_data, selectedLayer, selectedStyle):
             thicknessmode="pixels"),
         )] if selectedLayer!='None' else []
     return go.Figure(
-        data = regstat + [
-            Scattermapbox(
-            lat=df.lat ,
-            lon=df.lon ,
-            mode="markers",
-            customdata=df.filter(regex='pct$|count$', axis=1).sort_index(axis=1).to_numpy(),
-            text=df.iloc[:,0],
-            hovertemplate='<b>'+df.columns[0].title() +' </b>: %{text} <br>' +
-                         '<br><b>Positive Sentiment</b>: %{customdata[3]} % ' +
-                         '<br><b>Negative Sentiment</b>: %{customdata[1]} % ' +
-                         '<br><b>Neutral Sentiment</b>: %{customdata[2]} % ',
-            marker_color="#FF1818",
-            marker_size=np.log1p(df['count'])*10,
-            name = 'Tweet Stats'
-            )
-         ],
+        data = regstat + get_scatter(df),
         layout=Layout(
             autosize=True,
             margin=go.layout.Margin(l=0, r=0, t=0, b=0),
