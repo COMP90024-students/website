@@ -163,7 +163,7 @@ app.layout = html.Div(
                                         ),
                                         # dcc.Store(id='local', storage_type='local')
                                         dcc.Loading(id = "loading-icon2", 
-                        children=[dcc.Store(id='rawview-data', storage_type='local')],
+                        children=[html.Div(id='rawview-data', style={'display': 'none'})],
                         type='circle'),
                                         html.Label('Grouping Level:'),
                                         dcc.Dropdown(
@@ -215,7 +215,7 @@ app.layout = html.Div(
 )
 
 @app.callback(
-     Output('rawview-data','data'),
+     Output('rawview-data','children'),
     [Input("precision-dropdown","value")]
 )
 @cache.memoize(timeout=TIMEOUT)
@@ -225,7 +225,7 @@ def get_data(selectedPrecision):
 
 @app.callback(
     Output('topic-dropdown', 'options'),
-    [Input("rawview-data",'data'),])
+    [Input("rawview-data",'children'),])
 def set_topic_options(jsonified_rawdata):
     topic_map = {0:"General",1:"Covid APP",2:"Politics",3:"Politics & Covid APP"}
     df_view = pd.read_json(jsonified_rawdata, orient='split')
@@ -234,7 +234,7 @@ def set_topic_options(jsonified_rawdata):
 
 @app.callback(
     Output('year-dropdown', 'options'),
-    [Input("rawview-data",'data'),])
+    [Input("rawview-data",'children'),])
 def set_year_options(jsonified_rawdata):
     df_view = pd.read_json(jsonified_rawdata, orient='split')
     return [{"label": i, "value": i}
@@ -263,7 +263,7 @@ def filter_view(df,year='All',topic='All',grouping='None'):
 
 @app.callback(
     Output('view-data','data'),
-    [Input("rawview-data",'data'),
+    [Input("rawview-data",'children'),
     Input("year-dropdown", "value"),
     Input("topic-dropdown", "value"),
     Input("precision-dropdown", "value")]
