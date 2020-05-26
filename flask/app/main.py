@@ -248,16 +248,24 @@ def filter_view(df,year='All',topic='All',grouping='None'):
         df=df.loc[df.topic.isin(topic)]
     if grouping!='None':
         df=df.groupby(grouping,observed=True) \
-              .apply(lambda x: pd.Series({
-                  'lat'       : x['lat'].mean(),
-                  'lon'       : x['lon'].mean(),
-                  'count'      : x['count'].sum(),
-                  'avg_sentiment'  : x['avg_sentiment'].mean(),
-                  'pos_sentiment_pct': "{:0.2f}".format(sum(x['avg_sentiment']==1)/x.shape[0]*100),
-                  'neg_sentiment_pct': "{:0.2f}".format(sum(x['avg_sentiment']==-1)/x.shape[0]*100),
-                  'neu_sentiment_pct': "{:0.2f}".format(sum(x['avg_sentiment']==0)/x.shape[0]*100)
-              })
-            ).reset_index()
+              .agg(
+    lat=pd.NamedAgg(column="lat", aggfunc="mean"),
+    lon=pd.NamedAgg(column="lon", aggfunc="mean"),
+    count=pd.NamedAgg(column="count", aggfunc="sum"),
+    avg_sentiment=pd.NamedAgg(column="avg_sentiment", aggfunc="mean"),
+    pos_sentiment_pct=pd.NamedAgg(column="pos_sentiment_pct", aggfunc="mean"),
+    neg_sentiment_pct=pd.NamedAgg(column="neg_sentiment_pct", aggfunc="mean"),
+    neu_sentiment_pct=pd.NamedAgg(column="neu_sentiment_pct", aggfunc="mean"))
+            #   .apply(lambda x: pd.Series({
+            #       'lat'       : x['lat'].mean(),
+            #       'lon'       : x['lon'].mean(),
+            #       'count'      : x['count'].sum(),
+            #       'avg_sentiment'  : x['avg_sentiment'].mean(),
+            #       'pos_sentiment_pct': "{:0.2f}".format(sum(x['avg_sentiment']==1)/x.shape[0]*100),
+            #       'neg_sentiment_pct': "{:0.2f}".format(sum(x['avg_sentiment']==-1)/x.shape[0]*100),
+            #       'neu_sentiment_pct': "{:0.2f}".format(sum(x['avg_sentiment']==0)/x.shape[0]*100)
+            #   })
+            # ).reset_index()
     return df
 
 @app.callback(
@@ -282,9 +290,9 @@ def get_scatter(df):
                 customdata=df.filter(regex='pct$|count$', axis=1).sort_index(axis=1).to_numpy(),
                 text=df.iloc[:,0],
                 hovertemplate='<b>'+df.columns[0].title() +' </b>: %{text} <br>' +
-                             '<br><b>Positive Sentiment</b>: %{customdata[3]} % ' +
-                             '<br><b>Negative Sentiment</b>: %{customdata[1]} % ' +
-                             '<br><b>Neutral Sentiment</b>: %{customdata[2]} % ',
+                             '<br><b>Positive Sentiment</b>: %{customdata[3]:.2f} % ' +
+                             '<br><b>Negative Sentiment</b>: %{customdata[1]:.2f} % ' +
+                             '<br><b>Neutral Sentiment</b>: %{customdata[2]:.2f} % ',
                 marker_color="#FF1818",
                 marker_size=np.log1p(df['count'])*10,
                 name = 'Tweet Stats'

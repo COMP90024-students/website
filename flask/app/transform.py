@@ -43,26 +43,6 @@ def get_view(precision):
     response = requests.get(f'{COUCHDB_URL}/ui_db/_design/'+precision+'/_view/'+precision+'_view', params=params, auth=(COUCHDB_USER, COUCHDB_PASSWORD))
     return parse_view(response.json())
 
-def filter_view(df,year='All',topic='All',grouping='None'):
-    df1 = df.copy()
-    if year!='All':
-        df=df.loc[df.year==year]
-    if topic!='All' and 'All' not in topic:
-        df=df.loc[df.topic.isin(topic)]
-    if grouping!='None':
-        df=df.groupby(grouping) \
-              .apply(lambda x: pd.Series({
-                  'lat'       : x['lat'].mean(),
-                  'lon'       : x['lon'].mean(),
-                  'count'      : x['count'].sum(),
-                  'avg_sentiment'  : x['avg_sentiment'].mean(),
-                  'pos_sentiment_pct': "{:0.2f}".format(sum(x['avg_sentiment']==1)/x.shape[0]*100),
-                  'neg_sentiment_pct': "{:0.2f}".format(sum(x['avg_sentiment']==-1)/x.shape[0]*100),
-                  'neu_sentiment_pct': "{:0.2f}".format(sum(x['avg_sentiment']==0)/x.shape[0]*100)
-              })
-            ).reset_index()
-    return df
-
 def city_dropdown(lon,lat,city,zoom):
     return dict(args=[
                        {
