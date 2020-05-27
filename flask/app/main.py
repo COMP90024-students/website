@@ -120,7 +120,7 @@ app.layout = html.Div(
                         html.Img(
                             className="logo", src=app.get_asset_url("uom-logo.png")
                         ),
-                        html.H2("TWITTER DATA EXPLORER"),
+                        html.H2("Twitter Data Analyser"),
                         # Change to side-by-side for mobile layout
                         html.Div(
                             className="row",
